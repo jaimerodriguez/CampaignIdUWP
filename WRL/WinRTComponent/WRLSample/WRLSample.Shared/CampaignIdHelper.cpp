@@ -38,11 +38,36 @@ CampaignIdHelper::CampaignIdHelper()
 #endif 
 }
 
+
+void ExceptionTester( int index = 0 )
+{
+	if (index == 0)
+	{
+		throw;
+	} 
+	else if (index == 1)
+	{
+		throw ref new Platform::COMException(E_FAIL); 
+	}
+	else if (index == 2)
+	{
+		RoOriginateError(E_FAIL, HStringReference(L"Test failed").Get());
+		throw ;
+	}
+	else if (index == 3)
+	{
+		throw std::exception("std::exception" ); 
+	}
+}
+
  
 Windows::Foundation::IAsyncOperation<String^>^ CampaignIdHelper::GetCampaignId81Async()
 {
 	return concurrency::create_async([=]() -> String^ {
-		String^ resultCampaignId = nullptr ;		
+		String^ resultCampaignId = nullptr ;	
+
+		// ExceptionTester(3); 
+
 		HRESULT hr = Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
 		HString campaignId; 
 		if (SUCCEEDED(hr))
@@ -142,8 +167,8 @@ HRESULT CampaignIdHelper::GetCampaignIdFromStoreContextWithWait( HSTRING *presul
 				return S_OK;
 
 			});
-			asyncOperation->put_Completed(callback.Get());
 			 
+			asyncOperation->put_Completed(callback.Get());			 
 			DWORD waitResult = WaitForSingleObjectEx(asyncFinished.Get(), NetworkRequestTimeOutMills, false);
 
 
@@ -254,9 +279,9 @@ HRESULT CampaignIdHelper::GetCampaignIdFromCurrentAppWithWait(HSTRING* presultCa
 					RoOriginateError(hr, HStringReference(L"GetAppPurchaseCampaignIdAsync failed").Get());
 				} 
 				SetEvent(asyncFinished.Get());
-				return hr;  
-
+				return S_OK;  
 			});
+
 			asyncOperation->put_Completed(campaignIdCallback.Get());			
 			DWORD waitResult = WaitForSingleObjectEx(asyncFinished.Get(), NetworkRequestTimeOutMills, false);
 
