@@ -34,10 +34,24 @@ void MainPage::OnLoaded(Object ^unused, RoutedEventArgs^ unused2 )
 {
 
 	WRLSample::CampaignIdHelper^ helper = ref new WRLSample::CampaignIdHelper();
-	create_task(helper->GetCampaignId81Async()).then([this](String^ cid)
+	create_task(helper->GetCampaignId81Async()).then([this]( task<String^> t)
 	{
+		String^ cid; 
+
+		try
+		{
+			cid = t.get(); 
+		} 
+		catch ( Platform::COMException^ cex )
+		{
+			cid = ref new String( L"Error: "); 
+			cid += cex->Message; 
+		}
 		String^ message = ref new String( L"CID is: "); 
-		message += cid; 
+		if (cid->Length() > 0)
+			message += cid;
+		else
+			message += "'(empty)'"; 
 
 		this->Result->Text = message; 
 

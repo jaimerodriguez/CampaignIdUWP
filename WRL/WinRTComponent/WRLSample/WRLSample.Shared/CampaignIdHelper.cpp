@@ -42,7 +42,8 @@ CampaignIdHelper::CampaignIdHelper()
 Windows::Foundation::IAsyncOperation<String^>^ CampaignIdHelper::GetCampaignId81Async()
 {
 	return concurrency::create_async([=]() -> String^ {
-		String^ resultCampaignId = nullptr ;		
+		String^ resultCampaignId = nullptr ;	
+		 
 		HRESULT hr = Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
 		HString campaignId; 
 		if (SUCCEEDED(hr))
@@ -233,12 +234,12 @@ HRESULT CampaignIdHelper::GetCampaignIdFromCurrentAppWithWait(HSTRING* presultCa
 	ComPtr<ABI::Windows::ApplicationModel::Store::ICurrentAppWithCampaignId> currentApp;
 	HRESULT hr = GetActivationFactory(HStringReference(RuntimeClass_Windows_ApplicationModel_Store_CurrentApp).Get(), &currentApp);
 	 
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(hr) )
 	{
 		Event asyncFinished(CreateEventEx(NULL, NULL, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS));
 		ComPtr<IAsyncOperation<HSTRING>> asyncOperation;
 		hr = currentApp->GetAppPurchaseCampaignIdAsync(&asyncOperation);
-		if (SUCCEEDED(hr))
+		if (SUCCEEDED(hr) && asyncOperation != nullptr )
 		{			 
 			auto campaignIdCallback = Microsoft::WRL::Callback<Implements<RuntimeClassFlags<ClassicCom>, IAsyncOperationCompletedHandler<HSTRING>, FtmBase>>(
 				[&](IAsyncOperation<HSTRING>* operation, AsyncStatus status)
@@ -254,8 +255,7 @@ HRESULT CampaignIdHelper::GetCampaignIdFromCurrentAppWithWait(HSTRING* presultCa
 					RoOriginateError(hr, HStringReference(L"GetAppPurchaseCampaignIdAsync failed").Get());
 				} 
 				SetEvent(asyncFinished.Get());
-				return hr;  
-
+				return S_OK;  
 			});
 			asyncOperation->put_Completed(campaignIdCallback.Get());			
 			DWORD waitResult = WaitForSingleObjectEx(asyncFinished.Get(), NetworkRequestTimeOutMills, false);
